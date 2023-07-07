@@ -3,7 +3,8 @@
     "node_modules"
   ],
   "watch": [
-    "./index.ts"
+    "./index.ts",
+    "./src"
   ],
   "ext": "ts",
   "exec": "npm start"
