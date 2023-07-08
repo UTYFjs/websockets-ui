@@ -1,7 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as http from "http";
-import { WebSocketServer } from "ws";
 
 export const httpServer = http.createServer(function (req, res) {
 	const __dirname = path.resolve(path.dirname(""));

@@ -1,54 +1,101 @@
 import WebSocket, { WebSocketServer } from "ws";
-import { WsResponse } from "./types";
+import { ResponseType, WsResponse } from "../types/types";
+import { validation } from "../utils/validation";
+import { addShips, addUsersToRoom, createGame, createRoom, roomDb, userDb } from "../db/db";
+import { responseAll } from "../response/responseAll";
+import { responsePersonal } from "../response/responsePersonal";
+import { responseToGameRoom } from "../response/responseToGameRoom";
+import { typesResponseToGameRoom } from "../const/constants";
 
-export const wss = new WebSocketServer({
-	port: 3000,
-	/*perMessageDeflate: {
-		zlibDeflateOptions: {
-			// See zlib defaults.
-			chunkSize: 1024,
-			memLevel: 7,
-			level: 3,
-		},
-		zlibInflateOptions: {
-			chunkSize: 10 * 1024,
-		},
-		// Other options settable:
-		clientNoContextTakeover: true, // Defaults to negotiated value.
-		serverNoContextTakeover: true, // Defaults to negotiated value.
-		serverMaxWindowBits: 10, // Defaults to negotiated value.
-		// Below options specified as default values.
-		concurrencyLimit: 10, // Limits zlib concurrency for perf.
-		threshold: 1024, // Size (in bytes) below which messages
-		// should not be compressed if context takeover is disabled.
-	},*/
-});
+
+export const wss = new WebSocketServer({port: 3000});
 
 wss.on("connection", function connection(ws) {
 	console.log("there are connection websocket");
+	//ws = Date.now(); можно при создании комнаты каждой комнате передавать айдикомнаты и делать комнаты приватными
+	// ws - одно подключение
 	ws.on("error", console.error);
-	let req;
 	ws.on("message", function message(message) {
-		console.log("received: %s", message);
+		//console.log("received: %s", message);
 		const message1 = JSON.parse(message.toString());
-		const handle = (message: WsResponse) => {
-			let dataRes;
-			let dataRes1;
-			console.log("data from handle", message);
-			switch (message.type) {
-			case "reg":
-				dataRes = JSON.parse(message.data);
-				dataRes1 = { name: dataRes.name, index: 1, error: false, errorText: "noError" };
-				return { type: "reg", data: JSON.stringify(dataRes1), id: 0 };
-			case "create_room":
-				dataRes1 =  JSON.stringify( [{  roomId: 1, roomUsers: [ {  name: 12345,index:1,  } ],}, ] );
-				return { type: "update_room", data: dataRes1, id: 0 };
-			}
-		};
-		const req = handle(message1 as unknown as WsResponse );
-		ws.send(JSON.stringify(req));
-	});
+		
+		const handle = (
+			message: WsResponse,
+			ws: WebSocket,
+			wss: WebSocket.Server,
+		) => {
+			const data = validation(message);
+			if(data){
 
+				let response: ResponseType;
+				let dataResponse;
+				let dataRes;
+				let dataRes1;
+				switch (message.type) {
+				case "reg":
+					dataRes = JSON.parse(message.data);
+
+					userDb.push({ userId: ws, name: data.name, password: data.password });
+					responsePersonal(ws);
+					return ;
+				case "create_room":
+					// eslint-disable-next-line no-case-declarations
+					const currentUser = userDb.find((user) => user.userId === ws);
+					if (currentUser) {
+						createRoom({ userId: ws, name: currentUser.name });
+						responseAll("update_room");
+					}
+					return ;
+				case "add_user_to_room":
+
+					// eslint-disable-next-line no-case-declarations
+					const currentRoom = roomDb.find((room)=>room.roomId === data.indexRoom);
+					// eslint-disable-next-line no-case-declarations
+					let firstPlayer;
+					// eslint-disable-next-line no-case-declarations
+					const secondPlayer = userDb.find((user) => user.userId === ws);
+					if(currentRoom && secondPlayer){
+						 firstPlayer = currentRoom.roomUsers.find((user) => user.index === 0);
+						 addUsersToRoom(data.indexRoom, ws, secondPlayer.name);
+						 if(firstPlayer){
+							const currentIdGame = createGame(firstPlayer.userId, secondPlayer.userId, currentRoom);
+							responseToGameRoom(typesResponseToGameRoom.create_game, currentIdGame, currentRoom);
+						}						 
+						responseAll("update_room");
+					} else{
+						ws.send("some error, no currentRoom or secondPlayer");
+					}
+					
+					return ;
+				case "add_ships":
+					addShips(data);
+					responseToGameRoom(typesResponseToGameRoom.start_game, data.gameId);
+
+					return ;
+				case "attack":
+					console.log("attack.data --->", message.data);
+					dataRes = JSON.parse(message.data);
+					dataRes1 = JSON.stringify({ position: { x: 1, y: 1 }, currentPlayer: 1, status: "missed | killed | shot" });
+					return { type: "start_game", data: dataRes1, id: 0 };
+				}
+			}else{
+				wss.clients.forEach((client)=>{client.send("error");});
+			}
+
+		};
+		const req = handle(message1 as unknown as WsResponse, ws, wss );
+		/*wss.clients.forEach((client) => {
+			client.send(JSON.stringify(req));
+		});*/
+		//ws.send(JSON.stringify(req));
+	});
+	//wss.clients Arr - все клиенты у кого установлено подключение 
+	/*wss.clients.forEach((client) => { // каждый элемент в массиве  - клиент
+		client.send();
+если клиент обладает айдишником ему можно отправить сообщение
+if(client.id === id) { client.send()}
+
+	});*/
 	const forSend = { hello: "hello,, websocket is connected" };
 	console.log(JSON.stringify(forSend));
 });
