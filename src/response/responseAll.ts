@@ -1,4 +1,4 @@
-import { roomDb } from "../db/db";
+import { roomDb, winnersDb } from "../db/db";
 import { wss } from "../websocket_server";
 
 export const responseAll = (type: "update_room" | "update_winners") => {
@@ -17,6 +17,13 @@ export const responseAll = (type: "update_room" | "update_winners") => {
 				};
 			});
 		const response = { type: "update_room", data: JSON.stringify(dataResponse), id: 0 };
+		wss.clients.forEach((client) => {
+			client.send(JSON.stringify(response));
+		});
+	}
+	if (type === "update_winners") {
+		const dataResponse = winnersDb;
+		const response = { type: "update_winners", data: JSON.stringify(dataResponse), id: 0 };
 		wss.clients.forEach((client) => {
 			client.send(JSON.stringify(response));
 		});

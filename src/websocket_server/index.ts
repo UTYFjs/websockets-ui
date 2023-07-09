@@ -1,7 +1,7 @@
 import WebSocket, { WebSocketServer } from "ws";
 import { ResponseType, WsResponse } from "../types/types";
 import { validation } from "../utils/validation";
-import { addShips, addUsersToRoom, createGame, createRoom, roomDb, userDb } from "../db/db";
+import { addShips, addUsersToRoom, createGame, createRoom, gameDb, roomDb, userDb } from "../db/db";
 import { responseAll } from "../response/responseAll";
 import { responsePersonal } from "../response/responsePersonal";
 import { responseToGameRoom } from "../response/responseToGameRoom";
@@ -37,7 +37,9 @@ wss.on("connection", function connection(ws) {
 
 					userDb.push({ userId: ws, name: data.name, password: data.password });
 					responsePersonal(ws);
-					return ;
+					responseAll("update_winners");
+					return;
+
 				case "create_room":
 					// eslint-disable-next-line no-case-declarations
 					const currentUser = userDb.find((user) => user.userId === ws);
@@ -45,35 +47,44 @@ wss.on("connection", function connection(ws) {
 						createRoom({ userId: ws, name: currentUser.name });
 						responseAll("update_room");
 					}
-					return ;
+					return;
 				case "add_user_to_room":
-
 					// eslint-disable-next-line no-case-declarations
-					const currentRoom = roomDb.find((room)=>room.roomId === data.indexRoom);
+					const currentRoom = roomDb.find((room) => room.roomId === data.indexRoom);
 					// eslint-disable-next-line no-case-declarations
 					let firstPlayer;
 					// eslint-disable-next-line no-case-declarations
 					const secondPlayer = userDb.find((user) => user.userId === ws);
-					if(currentRoom && secondPlayer){
-						 firstPlayer = currentRoom.roomUsers.find((user) => user.index === 0);
-						 addUsersToRoom(data.indexRoom, ws, secondPlayer.name);
-						 if(firstPlayer){
-							const currentIdGame = createGame(firstPlayer.userId, secondPlayer.userId, currentRoom);
+					if (currentRoom && secondPlayer) {
+						firstPlayer = currentRoom.roomUsers.find((user) => user.index === 0);
+						addUsersToRoom(data.indexRoom, ws, secondPlayer.name);
+						if (firstPlayer) {
+							const currentIdGame = createGame(currentRoom);
 							responseToGameRoom(typesResponseToGameRoom.create_game, currentIdGame, currentRoom);
-						}						 
+							//responseToGameRoom()
+						}
 						responseAll("update_room");
-					} else{
+					} else {
 						ws.send("some error, no currentRoom or secondPlayer");
 					}
-					
-					return ;
+
+					return;
 				case "add_ships":
 					addShips(data);
 					responseToGameRoom(typesResponseToGameRoom.start_game, data.gameId);
-
-					return ;
+					responseToGameRoom(typesResponseToGameRoom.turn, data.gameId);
+					return;
 				case "attack":
 					console.log("attack.data --->", message.data);
+					// eslint-disable-next-line no-case-declarations
+					const currentGame = gameDb.find(game => game.idGame === data.gameId);
+					if(currentGame){
+						if(data.indexPlayer === currentGame?.currentPlayer){
+							responseToGameRoom(typesResponseToGameRoom.attack, data.gameId);
+							responseToGameRoom(typesResponseToGameRoom.turn, data.gameId);
+						}
+					}
+
 					dataRes = JSON.parse(message.data);
 					dataRes1 = JSON.stringify({ position: { x: 1, y: 1 }, currentPlayer: 1, status: "missed | killed | shot" });
 					return { type: "start_game", data: dataRes1, id: 0 };

@@ -34,6 +34,7 @@ export type WinnersType = {
 
 export type GameType = {
   idGame: number;
+  currentPlayer: 0 |1 | undefined;
   currentRoom: RoomType;
   0:  Array<ShipType>;
   1:  Array<ShipType>;

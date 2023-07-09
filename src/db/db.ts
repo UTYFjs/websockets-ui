@@ -5,7 +5,7 @@ export const userDb: Array<UserType> = [];
 
 export const roomDb: Array<RoomType> =[];
 
-export const winnersDb: Array<WinnersType> = [];
+export const winnersDb: Array<WinnersType> = [{name: "alex", wins: 16}];
 
 export const gameDb: Array<GameType> = [];
 
@@ -25,9 +25,9 @@ export const addUsersToRoom = (indexRoom: number, userId: WebSocket, name: strin
 	}
 };
 
-export const createGame = (ws1: WebSocket, ws2: WebSocket, currentRoom: RoomType): number => {
+export const createGame = ( currentRoom: RoomType): number => {
 	const idGame = gameDb.length + 1;
-	gameDb.push({ idGame: idGame,currentRoom: currentRoom , 0: [], 1: [] });
+	gameDb.push({ idGame: idGame,currentPlayer: undefined, currentRoom: currentRoom , 0: [], 1: [] });
 	return idGame; 
 };
 
