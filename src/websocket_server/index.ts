@@ -77,9 +77,9 @@ wss.on("connection", function connection(ws) {
 				case "attack":
 					console.log("attack.data --->", message.data);
 					// eslint-disable-next-line no-case-declarations
-					const currentGame = gameDb.find(game => game.idGame === data.gameId);
-					if(currentGame){
-						if(data.indexPlayer === currentGame?.currentPlayer){
+					const currentGame = gameDb.find((game) => game.idGame === data.gameId);
+					if (currentGame) {
+						if (data.indexPlayer === currentGame?.currentPlayer) {
 							responseToGameRoom(typesResponseToGameRoom.attack, data.gameId);
 							responseToGameRoom(typesResponseToGameRoom.turn, data.gameId);
 						}
@@ -88,6 +88,11 @@ wss.on("connection", function connection(ws) {
 					dataRes = JSON.parse(message.data);
 					dataRes1 = JSON.stringify({ position: { x: 1, y: 1 }, currentPlayer: 1, status: "missed | killed | shot" });
 					return { type: "start_game", data: dataRes1, id: 0 };
+				case "randomAttack":
+					
+					responseToGameRoom(typesResponseToGameRoom.attack, data.gameId);
+					responseToGameRoom(typesResponseToGameRoom.turn, data.gameId);
+					return;
 				}
 			}else{
 				wss.clients.forEach((client)=>{client.send("error");});

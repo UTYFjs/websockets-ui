@@ -29,7 +29,8 @@ export const responseToGameRoom = (type: typesResponseToGameRoom, currentIdGame:
 	if (type === typesResponseToGameRoom.turn) {
 		const currentGame = gameDb.find((game) => game.idGame === currentIdGame);
 		if (currentGame && currentGame[0].length > 0 && currentGame[1].length > 0) {
-			if (currentGame.currentPlayer === undefined) 	currentGame.currentPlayer = 0;
+			if (typeof currentGame.currentPlayer === "undefined"){currentGame.currentPlayer = 0;}
+			console.log("current player из турн", currentGame.currentPlayer);
 			currentGame.currentRoom.roomUsers.forEach((user) => {
 				dataResponse = { currentPlayer: currentGame.currentPlayer };
 				response.data = JSON.stringify(dataResponse);
@@ -41,16 +42,24 @@ export const responseToGameRoom = (type: typesResponseToGameRoom, currentIdGame:
 	if (type === typesResponseToGameRoom.attack) {
 		const currentGame = gameDb.find((game) => game.idGame === currentIdGame);
 		if (currentGame && currentGame[0].length > 0 && currentGame[1].length > 0) {
-			const dataResponse = { position: { x: 0, y: 0 }, currentPlayer: currentGame.currentPlayer, status: "killed" };
+			const dataResponse = { position: { x: 0, y: 0 }, currentPlayer: currentGame.currentPlayer, status: "miss" };
 			currentGame.currentRoom.roomUsers.forEach((user) => {
 				response.data = JSON.stringify(dataResponse);
 				user.userId.send(JSON.stringify(response));
-				if(dataResponse.status === "miss" ){
-					currentGame.currentPlayer = currentGame.currentPlayer ? 1: 0;
-				} else {
-					currentGame.currentPlayer = currentGame.currentPlayer ? 0 : 1;
-				}
 			});
+			if (dataResponse.status === "miss") {
+				console.log(
+					"меняем каррент плаер респонс статус",
+					dataResponse.status,
+					"current player",
+					currentGame.currentPlayer,
+				);
+				currentGame.currentPlayer = currentGame.currentPlayer ? 0 : 1;
+				console.log("current player после изменения", currentGame.currentPlayer);
+			} else {
+				currentGame.currentPlayer = currentGame.currentPlayer ? 1 : 0;
+				console.log("не меняем каррент плаер респонс статус", dataResponse.status);
+			}
 		}
 		return;
 	}
