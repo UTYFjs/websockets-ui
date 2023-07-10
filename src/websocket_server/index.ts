@@ -45,10 +45,15 @@ wss.on("connection", function connection(ws) {
 				case "create_room":
 					// eslint-disable-next-line no-case-declarations
 					const currentUser = userDb.find((user) => user.userId === ws);
-					if (currentUser) {
-						createRoom({ userId: ws, name: currentUser.name });
-						responseAll("update_room");
+					// eslint-disable-next-line no-case-declarations
+					const roomsThisUser = roomDb.find((room)=>room.roomUsers.find((user) => user.userId === ws));
+					if(!roomsThisUser){
+						if (currentUser) {
+							createRoom({ userId: ws, name: currentUser.name });
+							responseAll("update_room");
+						}
 					}
+
 					return;
 				case "add_user_to_room":
 					// eslint-disable-next-line no-case-declarations
@@ -252,7 +257,7 @@ wss.on("connection", function connection(ws) {
 			// add winners to winnerTable
 			if (enemy) {
 				console.log("Enemy Client disconnected");
-				const winnerIndexPlayer = room.roomUsers.findIndex((user) => user.userId = enemy.userId);
+				const winnerIndexPlayer = room.roomUsers.findIndex((user) => (user.userId = enemy.userId));
 				//add to winner table
 				const enemyName = enemy.name;
 				const winner = winnersDb.find((winner) => winner.name === enemyName);
@@ -265,23 +270,38 @@ wss.on("connection", function connection(ws) {
 					});
 				}
 				//send finish to enemy
-				const currentGame = gameDb.find((game )=> game.currentRoom.roomId === room.roomId);
-				
-				const response = { type: typesResponseToGameRoom.finish, data: JSON.stringify({ winPlayer: winnerIndexPlayer }), id: 0 };
-				if(enemy.userId && i?.userId){
+
+				const response = {
+					type: typesResponseToGameRoom.finish,
+					data: JSON.stringify({ winPlayer: winnerIndexPlayer }),
+					id: 0,
+				};
+				if (enemy.userId && i?.userId) {
 					enemy.userId.send(JSON.stringify(response));
 					i?.userId.send(JSON.stringify(response));
 				}
-				
-				
 			}
+
+			//delete rooms
+			const currentGameIndex = gameDb.findIndex((game) => game.currentRoom.roomId === room.roomId);
+			const currentRoom = gameDb.find((game) => game.currentRoom.roomId === room.roomId);
+			const roomIndex = roomDb.findIndex((room1) =>	room1.roomId === room.roomId);
+
+			roomDb.splice(roomIndex, 1);
+			gameDb.splice(currentGameIndex, 1);
+			
 			// send all update winners
-			const responseAll = { type: "update_winners", data: JSON.stringify(winnersDb), id: 0 };
+			responseAll("update_winners");
+			responseAll("update_room");
+			/*const responseAll = { type: "update_winners", data: JSON.stringify(winnersDb), id: 0 };
+			wss.clients.forEach((client) => {
+				client.send(JSON.stringify(responseAll));
+			});*/
+			// sendAll updateRooms
+			const responseAllUpdateRoom = { type: "update_room", data: JSON.stringify(winnersDb), id: 0 };
 			wss.clients.forEach((client) => {
 				client.send(JSON.stringify(responseAll));
 			});
-
-			const roomId = room.roomId;
 		}
 
 		console.log("Client disconnected");

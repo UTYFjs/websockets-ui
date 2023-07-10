@@ -1,5 +1,5 @@
 import { typesResponseToGameRoom } from "../const/constants";
-import { gameDb, winnersDb } from "../db/db";
+import { gameDb, roomDb, winnersDb } from "../db/db";
 import { RoomType } from "../types/types";
 import { wss } from "../websocket_server";
 
@@ -179,6 +179,19 @@ const checkStatusAttack = (dataAttack: { x: number; y: number; gameId: number; i
 							});
 						}
 					}
+					//remove room
+					const indexCurrentRoom = roomDb.findIndex(room => room.roomId === currentGame.currentRoom.roomId);
+					console.log(
+						"currentGame.currentRoom.roomId",
+						currentGame.currentRoom.roomId,
+						"indexCurrentRoom",
+						indexCurrentRoom,
+					);
+					if(indexCurrentRoom !== -1) {
+						console.log(indexCurrentRoom);
+						roomDb.splice(indexCurrentRoom, 1);
+					}
+					console.log("roomdb", roomDb);
 					currentGame.currentRoom.roomUsers.forEach((user) => {
 						//send resp finish
 						const dataResponse = {
