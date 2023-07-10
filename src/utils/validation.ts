@@ -1,7 +1,6 @@
 import { WsResponse } from "../types/types";
 
 export const validation = (message: WsResponse) =>{
-	//console.log("message.data", message.data);
 	let data;
 	if(message.data){
 		data = JSON.parse(message.data);

@@ -17,17 +17,16 @@ export const createRoom = (data: Omit<UserType,"password">) => {
 	roomDb.push(currentRoom);
 	return currentRoom;
 };
+
 export const addUsersToRoom = (indexRoom: number, userId: WebSocket | "bot", name: string) =>{
 	if(typeof userId === "string"){
-		console.log("я бот");
+		console.log("hello, i'm bot");
 		const currentRoom = roomDb.find((room) => room.roomId === indexRoom);
 		if (currentRoom) {
 			currentRoom.roomUsers.push({ userId: null, name: name, index: 1 });
 			return { name: name, index: 1 };
 		}
 	} else {
-
-		console.log("я не бот бот");
 		const currentRoom = roomDb.find((room) => room.roomId === indexRoom);
 		if (currentRoom) {
 			currentRoom.roomUsers.push({ userId: userId, name: name, index: 1 });
@@ -54,10 +53,7 @@ export const addShips = (data: {gameId: number, ships: Array<ShipType>, indexPla
 	if(currentGame){
 		currentGame[data.indexPlayer].ships = data.ships;
 		currentGame[data.indexPlayer].field = getShipsOnField(data);
-		//console.log(currentGame[data.indexPlayer].field);
-  	}
-
-
+	}
 	return;
 };
 
@@ -66,23 +62,16 @@ const getShipsOnField = (data: { gameId: number; ships: Array<ShipType>; indexPl
 	const {ships, gameId, indexPlayer} = data;
 	const field = getEmptyField();
 	const currentGame = gameDb.find(game => game.idGame === gameId);
-	console.log("getShipsOnField");
 	if(currentGame){
-		console.log("getShipsOnField заходим в текущую игру");
-		console.log("before", currentGame[indexPlayer].shipsXY);
 		currentGame[indexPlayer].shipsXY.splice(0,1);
-		console.log("after", currentGame[indexPlayer].shipsXY);
 		ships.forEach((ship, index) => {
 			const shipCoordinates = getShipCoordinates(ship);
-			//console.log("координаты корабля", shipCoordinates);
 			const coordinatesAroundShip = getCoordinatesAroundShip(shipCoordinates);
 			currentGame[indexPlayer].shipsXY.push({XY: shipCoordinates, aroundShips:coordinatesAroundShip,killedXY:[]});
-			//console.log("координаты корабля и все что добавляется в XY", currentGame[indexPlayer].shipsXY);
 			shipCoordinates.forEach(({ x, y }) => {
 				field[y][x] = index + 1;
 			});
 		});
-		console.log();
 	}
 	
 	return field;
@@ -114,7 +103,6 @@ const getShipCoordinates = (ship: ShipType) => {
 			restLength -= 1;
 		}
 	}
-	//console.log(`shipcoordinates ${length}`, shipCoordinates);
 	return shipCoordinates;
 };
 
@@ -142,6 +130,5 @@ const getCoordinatesAroundShip = (shipCoordinates: Array<CoordinatsType>) => {
 	const coordinatesAroundShip: Array<string> = Array.from(coordinatesSet);
 	const result:Array<CoordinatsType>=[];
 	 coordinatesAroundShip.forEach((coord) => {result.push(JSON.parse(coord));});
-	//console.log(coordinatesAroundShip);
 	return result;
 };

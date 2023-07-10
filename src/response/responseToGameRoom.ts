@@ -1,6 +1,5 @@
 import { typesResponseToGameRoom } from "../const/constants";
 import { gameDb, roomDb, winnersDb } from "../db/db";
-import { RoomType } from "../types/types";
 import { wss } from "../websocket_server";
 
 export const responseToGameRoom = (
@@ -30,9 +29,7 @@ export const responseToGameRoom = (
 		if (currentGame && currentGame[0].ships.length > 0 && currentGame[1].ships.length > 0) {
 			currentGame.currentRoom.roomUsers.forEach((user) => {
 				if (user.userId) {
-					//console.log("ships position ", ` user ${currentGame[user.index]}`, currentGame[user.index]);
 					dataResponse = { ships: currentGame[user.index], currentPlayerIndex: user.index };
-					//console.log("current ships", currentGame[user.index].ships);
 					response.data = JSON.stringify(dataResponse);
 					user.userId.send(JSON.stringify(response));
 				}
@@ -48,7 +45,6 @@ export const responseToGameRoom = (
 			if (typeof currentGame.currentPlayer === "undefined") {
 				currentGame.currentPlayer = 0;
 			}
-			console.log("current player из турн", currentGame.currentPlayer);
 			currentGame.currentRoom.roomUsers.forEach((user) => {
 				if (user.userId) {
 					dataResponse = { currentPlayer: currentGame.currentPlayer };
@@ -63,7 +59,6 @@ export const responseToGameRoom = (
 	if (type === typesResponseToGameRoom.attack && dataAttack) {
 		const currentGame = gameDb.find((game) => game.idGame === currentIdGame);
 		if (currentGame && currentGame[0].ships.length > 0 && currentGame[1].ships.length > 0) {
-			//console.log("координаты корабля из атаки", currentGame[0].shipsXY);
 			const{ x,y } = dataAttack;
 			const status = checkStatusAttack(dataAttack);
 			if(status === "killed"){
@@ -155,13 +150,9 @@ const checkStatusAttack = (dataAttack: { x: number; y: number; gameId: number; i
 						}
 					});
 				});
-				//const indexKilledShip = currentGame[indexEnemies].shipsXY.findIndex(item => item === currentGame[indexEnemies].shipsXY[indexShip]);
-				//console.log("indexKilledShip", indexKilledShip);
 				const restShipCells = currentGame[indexEnemies].shipsXY.reduce((acc, item) => {
 					return acc + item.XY.length;
 				}, 0);
-				console.log("restShipCells", restShipCells);
-
 
 				if (restShipCells === 0) {
 					//add winners to Db
@@ -181,17 +172,9 @@ const checkStatusAttack = (dataAttack: { x: number; y: number; gameId: number; i
 					}
 					//remove room
 					const indexCurrentRoom = roomDb.findIndex(room => room.roomId === currentGame.currentRoom.roomId);
-					console.log(
-						"currentGame.currentRoom.roomId",
-						currentGame.currentRoom.roomId,
-						"indexCurrentRoom",
-						indexCurrentRoom,
-					);
 					if(indexCurrentRoom !== -1) {
-						console.log(indexCurrentRoom);
 						roomDb.splice(indexCurrentRoom, 1);
 					}
-					console.log("roomdb", roomDb);
 					currentGame.currentRoom.roomUsers.forEach((user) => {
 						//send resp finish
 						const dataResponse = {
@@ -210,7 +193,6 @@ const checkStatusAttack = (dataAttack: { x: number; y: number; gameId: number; i
 						});
 					});
 				}
-				//console.log("lengrh killedship", currentGame[indexEnemies].shipsXY.length);
 				return "killed";
 			} 
 			return "shot";
