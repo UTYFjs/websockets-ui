@@ -60,7 +60,7 @@ wss.on("connection", function connection(ws) {
 						addUsersToRoom(data.indexRoom, ws, secondPlayer.name);
 						if (firstPlayer) {
 							const currentIdGame = createGame(currentRoom);
-							responseToGameRoom(typesResponseToGameRoom.create_game, currentIdGame, currentRoom);
+							responseToGameRoom(typesResponseToGameRoom.create_game, currentIdGame);
 							//responseToGameRoom()
 						}
 						responseAll("update_room");
@@ -75,13 +75,24 @@ wss.on("connection", function connection(ws) {
 					responseToGameRoom(typesResponseToGameRoom.turn, data.gameId);
 					return;
 				case "attack":
-					console.log("attack.data --->", message.data);
+					
 					// eslint-disable-next-line no-case-declarations
 					const currentGame = gameDb.find((game) => game.idGame === data.gameId);
 					if (currentGame) {
-						if (data.indexPlayer === currentGame?.currentPlayer) {
-							responseToGameRoom(typesResponseToGameRoom.attack, data.gameId);
-							responseToGameRoom(typesResponseToGameRoom.turn, data.gameId);
+						if (data.indexPlayer === currentGame.currentPlayer && typeof currentGame.currentPlayer === "number") {
+							if (currentGame[currentGame.currentPlayer].logShots.findIndex((item => item.x === data.x && item.y === data.y)) === -1){
+								console.log("заходит в обработку атаки");
+								currentGame[currentGame.currentPlayer].logShots.push({ x: data.x, y: data.y });
+								console.log(currentGame[currentGame.currentPlayer].logShots);
+								responseToGameRoom(typesResponseToGameRoom.attack, data.gameId, data);
+								responseToGameRoom(typesResponseToGameRoom.turn, data.gameId);
+							} else{
+								const dataResponse = { currentPlayer: currentGame.currentPlayer };
+								const response = { type: typesResponseToGameRoom.turn, data: JSON.stringify(dataResponse), id: 0 };
+								 currentGame.currentRoom.roomUsers[currentGame.currentPlayer].userId.send(JSON.stringify(response));
+							}
+		
+
 						}
 					}
 

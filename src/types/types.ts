@@ -34,14 +34,28 @@ export type WinnersType = {
 
 export type GameType = {
   idGame: number;
-  currentPlayer: 0 |1 | undefined;
+  currentPlayer: 0 | 1 | undefined;
   currentRoom: RoomType;
-  0:  Array<ShipType>;
-  1:  Array<ShipType>;
+  0: {
+    ships: Array<ShipType>;
+    field: Array<Array<number>>;
+    logShots: Array<CoordinatsType>;
+    shipsXY: [{ XY: Array<CoordinatsType>; aroundShips: Array<CoordinatsType>; killedXY: Array<CoordinatsType> }];
+  };
+  1: {
+    ships: Array<ShipType>;
+    field: Array<Array<number>>;
+    logShots: Array<CoordinatsType>;
+    shipsXY: [{ XY: Array<CoordinatsType>; aroundShips: Array<CoordinatsType>; killedXY: Array<CoordinatsType> }];
+  };
 };
 export type ShipType = {
-  position: { X: number; y: number};
+  position: { x: number; y: number};
   direction: boolean;
   type: "huge" | "large" | "medium" | "small";
   length: number
+}
+export type CoordinatsType = {
+  x: number;
+  y: number;
 }
