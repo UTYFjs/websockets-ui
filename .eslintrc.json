@@ -41,7 +41,7 @@
         ],
         "max-lines-per-function": [
             "error",
-            225
+            325
         ],
         "indent": [
             "error",

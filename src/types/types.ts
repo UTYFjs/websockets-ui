@@ -16,7 +16,7 @@ export type RoomType = {
   roomUsers: Array<PlayerType>;
 };
 type PlayerType = {
-  userId: WebSocket
+  userId: WebSocket | null;
   name: string;
   index: 0 | 1;
 };
@@ -57,5 +57,5 @@ export type ShipType = {
 }
 export type CoordinatsType = {
   x: number;
-  y: number;
+  y: number
 }

@@ -15,14 +15,26 @@ export const createRoom = (data: Omit<UserType,"password">) => {
 		roomUsers: [{ userId: data.userId, name: data.name, index: 0 }],
 	};
 	roomDb.push(currentRoom);
-	//return currentRoom;
+	return currentRoom;
 };
-export const addUsersToRoom = (indexRoom: number, userId: WebSocket, name: string) =>{
-	const currentRoom = roomDb.find((room) => room.roomId === indexRoom);
-	if(currentRoom){
-		currentRoom.roomUsers.push({ userId: userId, name: name, index: 1 });
-		return {name:name, index:1};
+export const addUsersToRoom = (indexRoom: number, userId: WebSocket | "bot", name: string) =>{
+	if(typeof userId === "string"){
+		console.log("я бот");
+		const currentRoom = roomDb.find((room) => room.roomId === indexRoom);
+		if (currentRoom) {
+			currentRoom.roomUsers.push({ userId: null, name: name, index: 1 });
+			return { name: name, index: 1 };
+		}
+	} else {
+
+		console.log("я не бот бот");
+		const currentRoom = roomDb.find((room) => room.roomId === indexRoom);
+		if (currentRoom) {
+			currentRoom.roomUsers.push({ userId: userId, name: name, index: 1 });
+			return { name: name, index: 1 };
+		}
 	}
+
 };
 
 export const createGame = ( currentRoom: RoomType): number => {

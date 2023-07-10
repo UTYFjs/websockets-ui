@@ -14,9 +14,12 @@ export const responseToGameRoom = (
 		const currentGame = gameDb.find((game) => game.idGame === currentIdGame);
 		if(currentGame){
 			currentGame.currentRoom.roomUsers.forEach((user) => {
-				dataResponse = { idGame: currentIdGame, idPlayer: user.index };
-				response.data = JSON.stringify(dataResponse);
-				user.userId.send(JSON.stringify(response));
+				if (user.userId) {
+					dataResponse = { idGame: currentIdGame, idPlayer: user.index };
+					response.data = JSON.stringify(dataResponse);
+					user.userId.send(JSON.stringify(response));
+				}
+
 			});
 		}
 
@@ -26,10 +29,14 @@ export const responseToGameRoom = (
 		const currentGame = gameDb.find((game) => game.idGame === currentIdGame);
 		if (currentGame && currentGame[0].ships.length > 0 && currentGame[1].ships.length > 0) {
 			currentGame.currentRoom.roomUsers.forEach((user) => {
-				//console.log("ships position ", ` user ${currentGame[user.index]}`, currentGame[user.index]);
-				dataResponse = { ships: currentGame[user.index], currentPlayerIndex: user.index };
-				response.data = JSON.stringify(dataResponse);
-				user.userId.send(JSON.stringify(response));
+				if (user.userId) {
+					//console.log("ships position ", ` user ${currentGame[user.index]}`, currentGame[user.index]);
+					dataResponse = { ships: currentGame[user.index], currentPlayerIndex: user.index };
+					//console.log("current ships", currentGame[user.index].ships);
+					response.data = JSON.stringify(dataResponse);
+					user.userId.send(JSON.stringify(response));
+				}
+
 			});
 		}
 
@@ -43,9 +50,12 @@ export const responseToGameRoom = (
 			}
 			console.log("current player из турн", currentGame.currentPlayer);
 			currentGame.currentRoom.roomUsers.forEach((user) => {
-				dataResponse = { currentPlayer: currentGame.currentPlayer };
-				response.data = JSON.stringify(dataResponse);
-				user.userId.send(JSON.stringify(response));
+				if (user.userId) {
+					dataResponse = { currentPlayer: currentGame.currentPlayer };
+					response.data = JSON.stringify(dataResponse);
+					user.userId.send(JSON.stringify(response));
+				}
+
 			});
 		}
 		return;
@@ -60,14 +70,20 @@ export const responseToGameRoom = (
 				
 				const dataResponse = { position: { x: x, y: y }, currentPlayer: currentGame.currentPlayer, status: "killed" };
 				currentGame.currentRoom.roomUsers.forEach((user) => {
-					response.data = JSON.stringify(dataResponse);
-					user.userId.send(JSON.stringify(response));
+					if (user.userId) {
+						response.data = JSON.stringify(dataResponse);
+						user.userId.send(JSON.stringify(response));
+					}
+
 				});
 			} else {
 				const dataResponse = { position: { x: x, y: y }, currentPlayer: currentGame.currentPlayer, status: status };
 				currentGame.currentRoom.roomUsers.forEach((user) => {
-					response.data = JSON.stringify(dataResponse);
-					user.userId.send(JSON.stringify(response));
+					if (user.userId) {
+						response.data = JSON.stringify(dataResponse);
+						user.userId.send(JSON.stringify(response));
+					}
+
 				});
 				if (dataResponse.status === "miss") {
 					currentGame.currentPlayer = currentGame.currentPlayer ? 0 : 1;
@@ -111,25 +127,32 @@ const checkStatusAttack = (dataAttack: { x: number; y: number; gameId: number; i
 							currentPlayer: currentGame.currentPlayer,
 							status: "miss",
 						};
-						response.type = typesResponseToGameRoom.attack;
-						response.data = JSON.stringify(dataResponse);
-						user.userId.send(JSON.stringify(response));
-						response.type = typesResponseToGameRoom.turn;
-						response.data = JSON.stringify({ currentPlayer: currentGame.currentPlayer });
-						user.userId.send(JSON.stringify(response));
+						if(user.userId){
+							response.type = typesResponseToGameRoom.attack;
+							response.data = JSON.stringify(dataResponse);
+							user.userId.send(JSON.stringify(response));
+							response.type = typesResponseToGameRoom.turn;
+							response.data = JSON.stringify({ currentPlayer: currentGame.currentPlayer });
+							user.userId.send(JSON.stringify(response));
+						}
+
 					});
 					currentGame[indexEnemies].shipsXY[indexShip].killedXY.forEach((killedXY) => {
-						const dataResponse = {
-							position: { x: killedXY.x, y: killedXY.y },
-							currentPlayer: currentGame.currentPlayer,
-							status: "killed",
-						};
-						response.type = typesResponseToGameRoom.attack;
-						response.data = JSON.stringify(dataResponse);
-						user.userId.send(JSON.stringify(response));
-						response.type = typesResponseToGameRoom.turn;
-						response.data = JSON.stringify({ currentPlayer: currentGame.currentPlayer });
-						user.userId.send(JSON.stringify(response));
+						if(killedXY){
+							const dataResponse = {
+								position: { x: killedXY.x, y: killedXY.y },
+								currentPlayer: currentGame.currentPlayer,
+								status: "killed",
+							};
+							if (user.userId) {
+								response.type = typesResponseToGameRoom.attack;
+								response.data = JSON.stringify(dataResponse);
+								user.userId.send(JSON.stringify(response));
+								response.type = typesResponseToGameRoom.turn;
+								response.data = JSON.stringify({ currentPlayer: currentGame.currentPlayer });
+								user.userId.send(JSON.stringify(response));
+							}
+						}
 					});
 				});
 				//const indexKilledShip = currentGame[indexEnemies].shipsXY.findIndex(item => item === currentGame[indexEnemies].shipsXY[indexShip]);
@@ -161,9 +184,12 @@ const checkStatusAttack = (dataAttack: { x: number; y: number; gameId: number; i
 						const dataResponse = {
 							winPlayer: currentGame.currentPlayer,
 						};
-						response.type = typesResponseToGameRoom.finish;
-						response.data = JSON.stringify(dataResponse);
-						user.userId.send(JSON.stringify(response));
+						if (user.userId) {
+							response.type = typesResponseToGameRoom.finish;
+							response.data = JSON.stringify(dataResponse);
+							user.userId.send(JSON.stringify(response));
+						}
+
 						// send all update winners
 						const responseAll = { type: "update_winners", data: JSON.stringify(winnersDb), id: 0 };
 						wss.clients.forEach((client) => {
