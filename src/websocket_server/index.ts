@@ -59,18 +59,20 @@ wss.on("connection", function connection(ws) {
 					// eslint-disable-next-line no-case-declarations
 					const currentRoom = roomDb.find((room) => room.roomId === data.indexRoom);
 					// eslint-disable-next-line no-case-declarations
-					let firstPlayer;
-					// eslint-disable-next-line no-case-declarations
-					const secondPlayer = userDb.find((user) => user.userId === ws);
-					if (currentRoom && secondPlayer) {
-						firstPlayer = currentRoom.roomUsers.find((user) => user.index === 0);
-						addUsersToRoom(data.indexRoom, ws, secondPlayer.name);
-						if (firstPlayer) {
+					if (currentRoom ) {
+						const firstPlayer = currentRoom.roomUsers.find((user) => user.index === 0);
+						// eslint-disable-next-line no-case-declarations
+						const secondPlayer = userDb.find((user) => user.userId === ws);
+						if(secondPlayer && firstPlayer && firstPlayer.userId !== secondPlayer.userId){
+							addUsersToRoom(data.indexRoom, ws, secondPlayer.name);
+
 							const currentIdGame = createGame(currentRoom);
 							responseToGameRoom(typesResponseToGameRoom.create_game, currentIdGame);
 							//responseToGameRoom()
+
+							responseAll("update_room");
 						}
-						responseAll("update_room");
+
 					} else {
 						ws.send("some error, no currentRoom or secondPlayer");
 					}
