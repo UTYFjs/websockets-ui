@@ -1,11 +1,12 @@
 import WebSocket, { WebSocketServer } from "ws";
 import { ResponseType, WsResponse } from "../types/types";
 import { validation } from "../utils/validation";
-import { addShips, addUsersToRoom, createGame, createRoom, gameDb, roomDb, userDb } from "../db/db";
+import { addShips, addUsersToRoom, createGame, createRoom, gameDb, roomDb, userDb, winnersDb } from "../db/db";
 import { responseAll } from "../response/responseAll";
 import { responsePersonal } from "../response/responsePersonal";
 import { responseToGameRoom } from "../response/responseToGameRoom";
 import { typesResponseToGameRoom } from "../const/constants";
+import { getRandomAttackData } from "./handle";
 
 
 export const wss = new WebSocketServer({port: 3000});
@@ -75,33 +76,40 @@ wss.on("connection", function connection(ws) {
 					responseToGameRoom(typesResponseToGameRoom.turn, data.gameId);
 					return;
 				case "attack":
-					
 					// eslint-disable-next-line no-case-declarations
 					const currentGame = gameDb.find((game) => game.idGame === data.gameId);
 					if (currentGame) {
 						if (data.indexPlayer === currentGame.currentPlayer && typeof currentGame.currentPlayer === "number") {
-							if (currentGame[currentGame.currentPlayer].logShots.findIndex((item => item.x === data.x && item.y === data.y)) === -1){
+							if (
+								currentGame[currentGame.currentPlayer].logShots.findIndex(
+									(item) => item.x === data.x && item.y === data.y,
+								) === -1
+							) {
 								console.log("заходит в обработку атаки");
 								currentGame[currentGame.currentPlayer].logShots.push({ x: data.x, y: data.y });
 								console.log(currentGame[currentGame.currentPlayer].logShots);
 								responseToGameRoom(typesResponseToGameRoom.attack, data.gameId, data);
 								responseToGameRoom(typesResponseToGameRoom.turn, data.gameId);
-							} else{
+							} else {
 								const dataResponse = { currentPlayer: currentGame.currentPlayer };
 								const response = { type: typesResponseToGameRoom.turn, data: JSON.stringify(dataResponse), id: 0 };
-								 currentGame.currentRoom.roomUsers[currentGame.currentPlayer].userId.send(JSON.stringify(response));
+								currentGame.currentRoom.roomUsers[currentGame.currentPlayer].userId.send(JSON.stringify(response));
 							}
-		
-
 						}
 					}
-
-					dataRes = JSON.parse(message.data);
-					dataRes1 = JSON.stringify({ position: { x: 1, y: 1 }, currentPlayer: 1, status: "missed | killed | shot" });
-					return { type: "start_game", data: dataRes1, id: 0 };
+					return;
 				case "randomAttack":
+					// eslint-disable-next-line no-case-declarations
+					const randomCoordinates = getRandomAttackData(data.gameId);
+					// eslint-disable-next-line no-case-declarations
+					const dataForRandomAttack = {
+						gameId: data.gameId,
+						x: randomCoordinates.x,
+						y: randomCoordinates.y,
+						indexPlayer: data.indexPlayer,
+					};
 					
-					responseToGameRoom(typesResponseToGameRoom.attack, data.gameId);
+					responseToGameRoom(typesResponseToGameRoom.attack, data.gameId, dataForRandomAttack);
 					responseToGameRoom(typesResponseToGameRoom.turn, data.gameId);
 					return;
 				}
@@ -115,6 +123,49 @@ wss.on("connection", function connection(ws) {
 			client.send(JSON.stringify(req));
 		});*/
 		//ws.send(JSON.stringify(req));
+	});
+	ws.on("close", () => {
+
+		const room = roomDb.find(room => room.roomUsers.find((user) => {
+			console.log("user.userId", user.userId);
+			return user.userId === ws;}));
+		console.log("room", room);
+		if(room) {
+			console.log(" Room Client disconnected");
+			const i = room.roomUsers.find((user) => user.userId === ws);
+			const enemy = room.roomUsers.find((user) => user.userId !== ws);
+			// add winners to winnerTable
+			if (enemy) {
+				console.log("Enemy Client disconnected");
+				const winnerIndexPlayer = room.roomUsers.findIndex((user) => user.userId = enemy.userId);
+				//add to winner table
+				const enemyName = enemy.name;
+				const winner = winnersDb.find((winner) => winner.name === enemyName);
+				if (winner) {
+					winner.wins += 1;
+				} else {
+					winnersDb.push({
+						name: enemyName,
+						wins: 1,
+					});
+				}
+				//send finish to enemy
+				const currentGame = gameDb.find((game )=> game.currentRoom.roomId === room.roomId);
+				
+				const response = { type: typesResponseToGameRoom.finish, data: JSON.stringify({ winPlayer: winnerIndexPlayer }), id: 0 };
+				enemy.userId.send(JSON.stringify(response));
+				i?.userId.send(JSON.stringify(response));
+			}
+			// send all update winners
+			const responseAll = { type: "update_winners", data: JSON.stringify(winnersDb), id: 0 };
+			wss.clients.forEach((client) => {
+				client.send(JSON.stringify(responseAll));
+			});
+
+			const roomId = room.roomId;
+		}
+
+		console.log("Client disconnected");
 	});
 	//wss.clients Arr - все клиенты у кого установлено подключение 
 	/*wss.clients.forEach((client) => { // каждый элемент в массиве  - клиент
