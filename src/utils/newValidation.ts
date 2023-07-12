@@ -1,28 +1,28 @@
 import { userDb } from "../db/db";
 import { ShipType, WsResponse } from "../types/types";
 
-interface RegMessageData {
+export interface RegMessageData {
   name: string;
   password: string;
 }
-interface AddToRoom {
+export interface AddToRoom {
 	indexRoom: number;
 }
 
-interface OtherMessageData {
+export interface OtherMessageData {
   [key: string]: any;
 }
-interface RandomAttack{
+export interface RandomAttack{
 	gameId: number;
 	indexPlayer: number;
 }
-interface Attack {
+export interface Attack {
 	x: number;
 	y: number;
 	gameId: number;
 	indexPlayer: number;
 }
-type MessageData = RegMessageData | OtherMessageData | AddToRoom | Array<ShipType> | RandomAttack | Attack;
+export type MessageData = RegMessageData | OtherMessageData | AddToRoom | Array<ShipType> | RandomAttack | Attack;
 
 
 export const validation = (message: WsResponse): MessageData | object | null | undefined => {

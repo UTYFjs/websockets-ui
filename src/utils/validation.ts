@@ -1,14 +1,5 @@
 import { WsResponse } from "../types/types";
 
-interface RegMessageData {
-  name: string;
-  password: string;
-}
-
-interface OtherMessageData {
-  [key: string]: any;
-}
-type MessageData = RegMessageData | OtherMessageData;
 
 export const validation = (message: WsResponse) =>{
 	let data;
