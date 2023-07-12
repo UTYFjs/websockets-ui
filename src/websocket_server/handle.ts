@@ -14,9 +14,26 @@ export const handle = (message: WsResponse, ws: WebSocket, wss: WebSocket.Server
 	if (data) {
 		switch (message.type) {
 		case "reg":
-			userDb.push({ userId: ws, name: data.name, password: data.password });
-			responsePersonal(ws);
-			responseAll("update_winners");
+			// eslint-disable-next-line no-case-declarations
+			const currentUser1 = userDb.find((user) => user.name === data.name);
+			if (currentUser1) {
+				const currentPassword = userDb.find((user) => user.password === data.password);
+				if (currentPassword) {
+					const indexCurrentUser = userDb.findIndex((user) => user.name === data.name);
+					if(indexCurrentUser !== -1){
+						userDb[indexCurrentUser].userId = ws;
+					}
+					responsePersonal(ws);
+					responseAll("update_winners");
+				} else {
+					responsePersonal(ws, true);
+				}
+			} else {
+				userDb.push({ userId: ws, name: data.name, password: data.password });
+				responsePersonal(ws);
+				responseAll("update_winners");
+			}
+
 			return;
 
 		case "create_room":

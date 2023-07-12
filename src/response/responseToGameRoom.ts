@@ -109,8 +109,6 @@ const checkStatusAttack = (dataAttack: { x: number; y: number; gameId: number; i
 			
 			currentGame[indexEnemies].shipsXY[indexShip].killedXY.push(currentGame[indexEnemies].shipsXY[indexShip].XY[indexXY]);
 			currentGame[indexEnemies].shipsXY[indexShip].XY.splice(indexXY,1);
-			console.log("корабль ", indexShip, currentGame[indexEnemies].shipsXY[indexShip], `координата х ${x} y ${y}`);
-			console.log("корабль с поля и его  индекс", currentGame[indexEnemies].field[y][x], indexShip, indexXY.toString());
 			if (currentGame[indexEnemies].shipsXY[indexShip].XY.length === 0 && typeof currentGame.currentPlayer === "number") {
 				const response = { type: typesResponseToGameRoom.attack, data: "", id: 0 };
 				currentGame.currentRoom.roomUsers.forEach((user) => {

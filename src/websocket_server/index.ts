@@ -1,6 +1,6 @@
 import  { WebSocketServer } from "ws";
 import { WsResponse } from "../types/types";
-import {  gameDb, roomDb, winnersDb } from "../db/db";
+import {  gameDb, roomDb, userDb, winnersDb } from "../db/db";
 import { responseAll } from "../response/responseAll";
 import { typesResponseToGameRoom } from "../const/constants";
 import {  handle } from "./handle";
@@ -15,11 +15,14 @@ wss.on("connection", function connection(ws) {
 
 	ws.on("message", function message(message) {
 		const message1 = JSON.parse(message.toString());
+		if(message1.data){
+			const data1 = JSON.parse(message1.data);
+		} 		
 		handle(message1 as unknown as WsResponse, ws, wss );
 	});
 
 	ws.on("close", () => {
-
+		
 		const room = roomDb.find(room => room.roomUsers.find((user) => {
 			return user.userId === ws;}));
 		if(room) {
@@ -63,7 +66,6 @@ wss.on("connection", function connection(ws) {
 			responseAll("update_winners");
 			responseAll("update_room");
 		}
-
 		console.log("Client disconnected");
 	});
 	//wss.clients Arr - все клиенты у кого установлено подключение 

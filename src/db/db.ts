@@ -5,7 +5,7 @@ export const userDb: Array<UserType> = [];
 
 export const roomDb: Array<RoomType> =[];
 
-export const winnersDb: Array<WinnersType> = [{name: "alex", wins: 16}];
+export const winnersDb: Array<WinnersType> = [];
 
 export const gameDb: Array<GameType> = [];
 
