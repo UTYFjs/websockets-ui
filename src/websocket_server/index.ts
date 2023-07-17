@@ -24,13 +24,11 @@ wss.on("connection", function connection(ws) {
 		const room = roomDb.find(room => room.roomUsers.find((user) => {
 			return user.userId === ws;}));
 		if(room) {
-			console.log("Client disconnected");
 			const i = room.roomUsers.find((user) => user.userId === ws);
 			const enemy = room.roomUsers.find((user) => user.userId !== ws);
 			// add winners to winnerTable
 			if (enemy) {
-				console.log("Enemy Client disconnected");
-				const winnerIndexPlayer = room.roomUsers.findIndex((user) => (user.userId = enemy.userId));
+				const winnerIndexPlayer = enemy.index;
 				//add to winner table
 				const enemyName = enemy.name;
 				const winner = winnersDb.find((winner) => winner.name === enemyName);
@@ -66,5 +64,4 @@ wss.on("connection", function connection(ws) {
 		}
 		console.log("Client disconnected");
 	});
-	//wss.clients Arr - все клиенты у кого установлено подключение 
 });
