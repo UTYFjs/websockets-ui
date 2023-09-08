@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import WebSocket from "ws";
 import { bot_ships } from "../bot_ships/bot_ships";
 import { typesResponseToGameRoom } from "../const/constants";
@@ -9,7 +10,7 @@ import { WsResponse } from "../types/types";
 import { validation } from "../utils/validation";
 
 
-export const handle = (message: WsResponse, ws: WebSocket, wss: WebSocket.Server) => {
+export const handle = async (message: WsResponse, ws: WebSocket, wss: WebSocket.Server) => {
 	const data = validation(message);
 	if (data) {
 		switch (message.type) {
@@ -113,13 +114,25 @@ export const handle = (message: WsResponse, ws: WebSocket, wss: WebSocket.Server
 
 						while (currentGame.currentPlayer === 1) {
 							const randomCoordinates = getRandomAttackData(data.gameId);
-
 							const dataForRandomAttack = {
 								gameId: data.gameId,
 								x: randomCoordinates.x,
 								y: randomCoordinates.y,
 								indexPlayer: 1,
 							};
+							/// иногда после задержки стреляет на моем поле.... 
+							// Оборачиваем setTimeout в промис
+							const botAttack = async () => {
+								return new Promise((resolve) => {
+									setTimeout(() => {
+										console.log("атака бота");
+										resolve(undefined);
+									}, 2000);
+								});
+							};
+
+							// Используем async/await для ожидания задержки
+							await botAttack();
 
 							responseToGameRoom(typesResponseToGameRoom.attack, data.gameId, dataForRandomAttack);
 							responseToGameRoom(typesResponseToGameRoom.turn, data.gameId);
